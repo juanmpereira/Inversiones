@@ -8,5 +8,13 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.5",
+    "exceljs": "^4.4.0",
+    "googleapis": "^178.0.0"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
   }
 }

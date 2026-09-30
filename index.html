@@ -3,15 +3,102 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Proyecto Inversiones en preparación." />
-    <title>Inversiones</title>
+    <meta name="description" content="Panel de seguimiento de cartera de inversiones." />
+    <meta name="theme-color" content="#f5f7fb" />
+    <title>Inversiones | Panel de cartera</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="script.js" defer></script>
   </head>
   <body>
-    <main>
-      <h1>Inversiones</h1>
-      <p>Proyecto en preparación.</p>
+    <main class="dashboard">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Inicio de Inversiones">
+          <span class="brand-mark" aria-hidden="true">↗</span>
+          <span>capital<span class="brand-light">folio</span></span>
+        </a>
+        <div class="topbar-right">
+          <span class="market-status"><span class="status-dot"></span> Seguimiento personal</span>
+          <button class="refresh-button" id="refresh-button" type="button" aria-label="Actualizar datos">
+            <span aria-hidden="true">⟳</span> Actualizar
+          </button>
+        </div>
+      </header>
+
+      <section class="page-heading">
+        <div>
+          <p class="eyebrow">TU RESUMEN FINANCIERO</p>
+          <h1>Mi cartera</h1>
+          <p class="subtitle">Una mirada clara a tus inversiones y su evolución.</p>
+        </div>
+        <p class="last-updated" id="last-updated">Conectando con Google Sheets…</p>
+      </section>
+
+      <section class="notice hidden" id="notice" role="status" aria-live="polite"></section>
+
+      <section class="metric-grid" aria-label="Resumen de cartera">
+        <article class="metric-card total-card">
+          <div class="metric-label">Valor actual de cartera <span class="metric-icon">◈</span></div>
+          <div class="metric-value" id="total-current">—</div>
+          <div class="metric-foot" id="holdings-count">Esperando datos de la hoja</div>
+        </article>
+        <article class="metric-card">
+          <div class="metric-label">Capital invertido <span class="metric-icon">↗</span></div>
+          <div class="metric-value" id="total-invested">—</div>
+          <div class="metric-foot">Costo acumulado de las posiciones</div>
+        </article>
+        <article class="metric-card">
+          <div class="metric-label">Ganancia / pérdida <span class="metric-icon">±</span></div>
+          <div class="metric-value" id="total-gain">—</div>
+          <div class="metric-foot" id="total-return">Rendimiento no disponible</div>
+        </article>
+        <article class="metric-card">
+          <div class="metric-label">Mejor rendimiento <span class="metric-icon">✦</span></div>
+          <div class="metric-value metric-feature" id="best-performer">—</div>
+          <div class="metric-foot" id="best-performer-foot">Entre las posiciones con costo cargado</div>
+        </article>
+      </section>
+
+      <section class="charts-grid" aria-label="Gráficos de la cartera">
+        <article class="panel allocation-panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">DISTRIBUCIÓN</p><h2>¿Dónde está mi cartera?</h2></div>
+            <span class="panel-tag">Por valor actual</span>
+          </div>
+          <div class="allocation-content">
+            <div class="donut-wrap">
+              <div class="donut" id="allocation-chart" role="img" aria-label="Distribución de la cartera por activo">
+                <div class="donut-hole"><strong id="allocation-count">—</strong><span>activos</span></div>
+              </div>
+            </div>
+            <div class="legend" id="allocation-legend"></div>
+          </div>
+        </article>
+
+        <article class="panel comparison-panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">RESULTADO POR ACTIVO</p><h2>Invertido vs. valor actual</h2></div>
+            <span class="panel-tag">Comparación</span>
+          </div>
+          <div class="bar-legend"><span><i class="legend-swatch invested-swatch"></i>Invertido</span><span><i class="legend-swatch current-swatch"></i>Valor actual</span></div>
+          <div class="comparison-chart" id="comparison-chart"></div>
+        </article>
+      </section>
+
+      <section class="panel positions-panel">
+        <div class="panel-heading positions-heading">
+          <div><p class="eyebrow">TUS POSICIONES</p><h2>Rendimiento por activo</h2><p class="panel-subtitle">Compras repetidas agrupadas por activo; ordenado por ganancia en dinero.</p></div>
+          <span class="panel-tag">Datos de tu hoja</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Activo</th><th>Cantidad</th><th>Precio prom. compra</th><th>Precio actual</th><th>Invertido</th><th>Valor actual</th><th>Ganancia</th><th>Rendimiento</th></tr></thead>
+            <tbody id="positions-body"><tr><td colspan="8" class="empty-state">Cargando posiciones…</td></tr></tbody>
+          </table>
+        </div>
+        <p class="table-note">El precio promedio se pondera por cantidad. La ganancia y el rendimiento se calculan a partir de Invertido y Valor Actual de la hoja.</p>
+      </section>
+
+      <footer class="disclaimer">Información de seguimiento basada en tu hoja de cálculo. No es asesoramiento financiero ni una recomendación de compra o venta.</footer>
     </main>
   </body>
 </html>
