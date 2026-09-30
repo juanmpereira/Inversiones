@@ -227,6 +227,7 @@ function renderAllocation(assets) {
 
 function renderComparison(assets) {
 	const largestMovers = assets
+		.filter((asset) => !isExcludedFromAllocation(asset))
 		.filter((asset) => asset.invested > 0 || asset.currentValue > 0)
 		.sort((a, b) => Math.abs(b.returnPct) - Math.abs(a.returnPct))
 		.slice(0, 8);
