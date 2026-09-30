@@ -30,7 +30,7 @@
           <h1>Mi cartera</h1>
           <p class="subtitle">Una mirada clara a tus inversiones y su evolución.</p>
         </div>
-        <p class="last-updated" id="last-updated">Conectando con Google Sheets…</p>
+        <p class="last-updated" id="last-updated">Conectando con Google Drive…</p>
       </section>
 
       <section class="notice hidden" id="notice" role="status" aria-live="polite"></section>
@@ -42,14 +42,29 @@
           <div class="metric-foot" id="holdings-count">Esperando datos de la hoja</div>
         </article>
         <article class="metric-card">
-          <div class="metric-label">Capital invertido <span class="metric-icon">↗</span></div>
+          <div class="metric-label">Invertido en posiciones abiertas <span class="metric-icon">↗</span></div>
           <div class="metric-value" id="total-invested">—</div>
-          <div class="metric-foot">Costo acumulado de las posiciones</div>
+          <div class="metric-foot">Costo de las posiciones que seguís teniendo</div>
+        </article>
+        <article class="metric-card estimate-card">
+          <div class="metric-label">Capital propio estimado <span class="metric-icon">≈</span></div>
+          <div class="metric-value" id="own-capital-estimate">—</div>
+          <div class="metric-foot">Abierto menos resultado neto de ventas*</div>
         </article>
         <article class="metric-card">
-          <div class="metric-label">Ganancia / pérdida <span class="metric-icon">±</span></div>
+          <div class="metric-label">Resultado no realizado <span class="metric-icon">±</span></div>
           <div class="metric-value" id="total-gain">—</div>
-          <div class="metric-foot" id="total-return">Rendimiento no disponible</div>
+          <div class="metric-foot" id="total-return">Resultado de posiciones abiertas</div>
+        </article>
+        <button class="metric-card sales-toggle" id="sales-toggle" type="button" aria-expanded="false" aria-controls="sales-panel">
+          <div class="metric-label">Ganado en ventas <span class="metric-icon">✓</span></div>
+          <div class="metric-value" id="realized-gain">—</div>
+          <div class="metric-foot"><span id="sales-count">Ventas cerradas registradas</span><span class="sales-toggle-hint" aria-hidden="true"> Ver detalle ↓</span></div>
+        </button>
+        <article class="metric-card">
+          <div class="metric-label">Ganancia acumulada <span class="metric-icon">Σ</span></div>
+          <div class="metric-value" id="cumulative-gain">—</div>
+          <div class="metric-foot">Abiertas + ventas cerradas</div>
         </article>
         <article class="metric-card">
           <div class="metric-label">Mejor rendimiento <span class="metric-icon">✦</span></div>
@@ -62,7 +77,7 @@
         <article class="panel allocation-panel">
           <div class="panel-heading">
             <div><p class="eyebrow">DISTRIBUCIÓN</p><h2>¿Dónde está mi cartera?</h2></div>
-            <span class="panel-tag">Por valor actual</span>
+            <span class="panel-tag">Sin fondos de reserva</span>
           </div>
           <div class="allocation-content">
             <div class="donut-wrap">
@@ -77,9 +92,10 @@
         <article class="panel comparison-panel">
           <div class="panel-heading">
             <div><p class="eyebrow">RESULTADO POR ACTIVO</p><h2>Invertido vs. valor actual</h2></div>
-            <span class="panel-tag">Comparación</span>
+            <span class="panel-tag">Mayor variación</span>
           </div>
           <div class="bar-legend"><span><i class="legend-swatch invested-swatch"></i>Invertido</span><span><i class="legend-swatch current-swatch"></i>Valor actual</span></div>
+          <p class="comparison-note">Muestra primero las mayores subas y bajas porcentuales. Cada par se ajusta a su propio máximo; el porcentaje y los importes permiten comparar el resultado real.</p>
           <div class="comparison-chart" id="comparison-chart"></div>
         </article>
       </section>
@@ -91,11 +107,25 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Activo</th><th>Cantidad</th><th>Precio prom. compra</th><th>Precio actual</th><th>Invertido</th><th>Valor actual</th><th>Ganancia</th><th>Rendimiento</th></tr></thead>
-            <tbody id="positions-body"><tr><td colspan="8" class="empty-state">Cargando posiciones…</td></tr></tbody>
+            <thead><tr><th>Activo</th><th>Peso cartera</th><th>Cantidad</th><th>Precio prom. compra</th><th>Precio actual</th><th>Ganancia</th><th>Rendimiento</th></tr></thead>
+            <tbody id="positions-body"><tr><td colspan="7" class="empty-state">Cargando posiciones…</td></tr></tbody>
           </table>
         </div>
-        <p class="table-note">El precio promedio se pondera por cantidad. La ganancia y el rendimiento se calculan a partir de Invertido y Valor Actual de la hoja.</p>
+        <p class="table-note">El peso se calcula automáticamente sobre la parte invertible de la cartera, excluyendo BLATAM y BINOME T-bill. El capital invertido y valor actual siguen usándose para calcular las ganancias, aunque no se muestren en esta tabla.</p>
+      </section>
+
+      <section class="panel sales-panel" id="sales-panel" hidden>
+        <div class="panel-heading positions-heading">
+          <div><p class="eyebrow">OPERACIONES CERRADAS</p><h2>Ganancias realizadas</h2><p class="panel-subtitle">Se suman como resultado histórico; no se descuentan del capital invertido actual.</p></div>
+          <span class="panel-tag" id="sales-total-tag">Ventas</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Activo vendido</th><th>Operaciones</th><th>Cantidad</th><th>Compra prom.</th><th>Venta prom.</th><th>Invertido al vender</th><th>Total venta</th><th>Ganado</th><th>Rendimiento</th></tr></thead>
+            <tbody id="sales-body"><tr><td colspan="9" class="empty-state">Cargando ventas…</td></tr></tbody>
+          </table>
+        </div>
+        <p class="table-note">*El capital propio estimado supone que reinvertiste todo el resultado neto de las ventas. La ganancia acumulada suma el resultado de posiciones abiertas más «Ganado». Si no reinvertiste todo, el aporte real requiere registrar depósitos, retiros y reinversiones. El resultado realizado no representa necesariamente efectivo disponible.</p>
       </section>
 
       <footer class="disclaimer">Información de seguimiento basada en tu hoja de cálculo. No es asesoramiento financiero ni una recomendación de compra o venta.</footer>

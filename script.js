@@ -1,4 +1,5 @@
 const COLORS = ["#5977b5", "#52a886", "#e2aa55", "#8d78bd", "#de7e83", "#56a7b4", "#71849e", "#9bb478"];
+const EXCLUDED_ALLOCATION_ASSETS = new Set(["blatam", "binome t-bill"]);
 const moneyFormatter = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const numberFormatter = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 4 });
 const percentageFormatter = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -11,6 +12,10 @@ const elements = {
 	totalInvested: document.querySelector("#total-invested"),
 	totalGain: document.querySelector("#total-gain"),
 	totalReturn: document.querySelector("#total-return"),
+	realizedGain: document.querySelector("#realized-gain"),
+	salesCount: document.querySelector("#sales-count"),
+	ownCapitalEstimate: document.querySelector("#own-capital-estimate"),
+	cumulativeGain: document.querySelector("#cumulative-gain"),
 	holdingsCount: document.querySelector("#holdings-count"),
 	bestPerformer: document.querySelector("#best-performer"),
 	bestPerformerFoot: document.querySelector("#best-performer-foot"),
@@ -19,6 +24,10 @@ const elements = {
 	allocationLegend: document.querySelector("#allocation-legend"),
 	comparisonChart: document.querySelector("#comparison-chart"),
 	positionsBody: document.querySelector("#positions-body"),
+	salesBody: document.querySelector("#sales-body"),
+	salesTotalTag: document.querySelector("#sales-total-tag"),
+	salesToggle: document.querySelector("#sales-toggle"),
+	salesPanel: document.querySelector("#sales-panel"),
 };
 
 function parseNumber(value) {
@@ -50,6 +59,10 @@ function normalizeHeader(value) {
 
 function normalizeAsset(value) {
 	return String(value || "").trim().replace(/\s+/g, " ");
+}
+
+function isExcludedFromAllocation(asset) {
+	return EXCLUDED_ALLOCATION_ASSETS.has(normalizeAsset(asset.name).toLocaleLowerCase("es"));
 }
 
 function consolidateRows(rows) {
@@ -132,6 +145,10 @@ function formatMoney(value) {
 	return `$${moneyFormatter.format(value)}`;
 }
 
+function roundMoney(value) {
+	return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
 function formatPercent(value) {
 	return `${percentageFormatter.format(value)}%`;
 }
@@ -147,20 +164,29 @@ function applySignClass(element, value) {
 	element.classList.toggle("negative", value < 0);
 }
 
-function renderSummary(assets) {
-	const totalInvested = assets.reduce((sum, asset) => sum + asset.invested, 0);
-	const totalCurrent = assets.reduce((sum, asset) => sum + asset.currentValue, 0);
-	const totalGain = totalCurrent - totalInvested;
-	const totalReturn = totalInvested ? (totalGain / totalInvested) * 100 : 0;
+function renderSummary(assets, sales) {
+	const totalInvested = roundMoney(assets.reduce((sum, asset) => sum + asset.invested, 0));
+	const totalCurrent = roundMoney(assets.reduce((sum, asset) => sum + asset.currentValue, 0));
+	const unrealizedGain = roundMoney(totalCurrent - totalInvested);
+	const realizedGain = roundMoney(sales.reduce((sum, sale) => sum + sale.gain, 0));
+	const cumulativeGain = roundMoney(unrealizedGain + realizedGain);
+	const totalReturn = totalInvested ? (unrealizedGain / totalInvested) * 100 : 0;
 	const bestReturn = assets.filter((asset) => asset.invested > 0).sort((a, b) => b.returnPct - a.returnPct)[0];
 
 	elements.totalCurrent.textContent = formatMoney(totalCurrent);
 	elements.totalInvested.textContent = formatMoney(totalInvested);
-	elements.totalGain.textContent = formatMoney(totalGain);
-	applySignClass(elements.totalGain, totalGain);
-	elements.totalReturn.textContent = `${formatPercent(totalReturn)} de rendimiento total`;
+	elements.totalGain.textContent = formatMoney(unrealizedGain);
+	applySignClass(elements.totalGain, unrealizedGain);
+	elements.totalReturn.textContent = `${formatPercent(totalReturn)} en posiciones abiertas`;
 	applySignClass(elements.totalReturn, totalReturn);
 	elements.holdingsCount.textContent = `${assets.length} activos consolidados`;
+	elements.realizedGain.textContent = formatMoney(realizedGain);
+	applySignClass(elements.realizedGain, realizedGain);
+	elements.salesCount.textContent = `${sales.reduce((sum, sale) => sum + sale.transactions, 0)} operaciones cerradas`;
+	const ownCapitalEstimate = roundMoney(totalInvested - realizedGain);
+	elements.ownCapitalEstimate.textContent = formatMoney(ownCapitalEstimate);
+	elements.cumulativeGain.textContent = formatMoney(cumulativeGain);
+	applySignClass(elements.cumulativeGain, cumulativeGain);
 
 	if (bestReturn) {
 		elements.bestPerformer.textContent = bestReturn.name;
@@ -173,8 +199,9 @@ function renderSummary(assets) {
 }
 
 function renderAllocation(assets) {
-	const total = assets.reduce((sum, asset) => sum + Math.max(asset.currentValue, 0), 0);
-	const sorted = [...assets].sort((a, b) => b.currentValue - a.currentValue);
+	const allocationAssets = assets.filter((asset) => !isExcludedFromAllocation(asset));
+	const total = allocationAssets.reduce((sum, asset) => sum + Math.max(asset.currentValue, 0), 0);
+	const sorted = [...allocationAssets].sort((a, b) => b.currentValue - a.currentValue);
 	const visible = sorted.slice(0, 6);
 	const others = sorted.slice(6).reduce((sum, asset) => sum + Math.max(asset.currentValue, 0), 0);
 	if (others > 0) visible.push({ name: "Otros", currentValue: others });
@@ -189,7 +216,7 @@ function renderAllocation(assets) {
 	elements.allocationChart.style.background = segments.length
 		? `conic-gradient(${segments.join(", ")})`
 		: "conic-gradient(#e9edf4 0 100%)";
-	elements.allocationCount.textContent = String(assets.length);
+	elements.allocationCount.textContent = String(allocationAssets.length);
 	elements.allocationLegend.innerHTML = visible.length
 		? visible.map((asset, index) => {
 			const share = total ? (Math.max(asset.currentValue, 0) / total) * 100 : 0;
@@ -199,62 +226,98 @@ function renderAllocation(assets) {
 }
 
 function renderComparison(assets) {
-	const largest = [...assets].sort((a, b) => b.currentValue - a.currentValue).slice(0, 8);
-	const maximum = Math.max(1, ...largest.flatMap((asset) => [asset.invested, asset.currentValue]));
-	elements.comparisonChart.innerHTML = largest.length
-		? largest.map((asset) => {
-			const investedWidth = Math.max(0, (asset.invested / maximum) * 100);
-			const currentWidth = Math.max(0, (asset.currentValue / maximum) * 100);
-			return `<div class="comparison-row" title="${escapeHtml(asset.name)}: invertido ${formatMoney(asset.invested)}; actual ${formatMoney(asset.currentValue)}">
-				<span class="comparison-name">${escapeHtml(asset.name)}</span>
-				<span class="bar-pair"><i class="bar-track"><i class="bar-fill invested" style="width:${investedWidth}%"></i></i><i class="bar-track"><i class="bar-fill current" style="width:${currentWidth}%"></i></i></span>
-				<span class="comparison-value">${formatMoney(asset.currentValue)}</span>
+	const largestMovers = assets
+		.filter((asset) => asset.invested > 0 || asset.currentValue > 0)
+		.sort((a, b) => Math.abs(b.returnPct) - Math.abs(a.returnPct))
+		.slice(0, 8);
+	elements.comparisonChart.innerHTML = largestMovers.length
+		? largestMovers.map((asset) => {
+			const pairMaximum = Math.max(asset.invested, asset.currentValue, 1);
+			const investedWidth = Math.max(0, (asset.invested / pairMaximum) * 100);
+			const currentWidth = Math.max(0, (asset.currentValue / pairMaximum) * 100);
+			const performanceClass = asset.returnPct > 0 ? "positive" : asset.returnPct < 0 ? "negative" : "neutral";
+			return `<div class="comparison-row" title="${escapeHtml(asset.name)} — invertido: ${formatMoney(asset.invested)}; valor actual: ${formatMoney(asset.currentValue)}; rendimiento: ${formatPercent(asset.returnPct)}">
+				<span class="comparison-asset"><span class="comparison-name">${escapeHtml(asset.name)}</span><span class="comparison-delta ${performanceClass}">${formatPercent(asset.returnPct)}</span></span>
+				<span class="bar-pair">
+					<span class="bar-track"><span class="bar-fill invested" style="width:${investedWidth}%"></span></span>
+					<span class="bar-track"><span class="bar-fill current" style="width:${currentWidth}%"></span></span>
+				</span>
+				<span class="comparison-values"><span>${formatMoney(asset.invested)}</span><span>${formatMoney(asset.currentValue)}</span></span>
 			</div>`;
 		}).join("")
 		: '<p class="empty-state">Sin datos para comparar.</p>';
 }
 
 function renderPositions(assets) {
+	const totalCurrent = assets
+		.filter((asset) => !isExcludedFromAllocation(asset))
+		.reduce((sum, asset) => sum + asset.currentValue, 0);
 	elements.positionsBody.innerHTML = assets.length
 		? assets.map((asset) => {
 			const sign = asset.gain > 0 ? "positive" : asset.gain < 0 ? "negative" : "neutral";
 			const initials = escapeHtml(asset.name.slice(0, 2).toUpperCase());
+			const excludedFromAllocation = isExcludedFromAllocation(asset);
+			const portfolioWeight = totalCurrent && !excludedFromAllocation ? (asset.currentValue / totalCurrent) * 100 : 0;
 			return `<tr>
 				<td><span class="asset-cell"><span class="asset-avatar">${initials}</span>${escapeHtml(asset.name)}</span></td>
+				<td>${excludedFromAllocation ? '<span class="panel-tag">Reserva</span>' : formatPercent(portfolioWeight)}</td>
 				<td>${numberFormatter.format(asset.quantity)}</td>
 				<td>${asset.averagePurchasePrice ? formatMoney(asset.averagePurchasePrice) : "—"}</td>
 				<td>${asset.currentPrice ? formatMoney(asset.currentPrice) : "—"}</td>
-				<td>${formatMoney(asset.invested)}</td>
-				<td>${formatMoney(asset.currentValue)}</td>
 				<td class="gain-cell ${sign}">${formatMoney(asset.gain)}</td>
 				<td><span class="return-pill ${sign}">${asset.invested ? formatPercent(asset.returnPct) : "s/c"}</span></td>
 			</tr>`;
 		}).join("")
-		: '<tr><td colspan="8" class="empty-state">La hoja no contiene posiciones con valores.</td></tr>';
+		: '<tr><td colspan="7" class="empty-state">La hoja no contiene posiciones con valores.</td></tr>';
+}
+
+function renderSales(sales) {
+	const totalRealized = sales.reduce((sum, sale) => sum + sale.gain, 0);
+	elements.salesTotalTag.textContent = `${sales.reduce((sum, sale) => sum + sale.transactions, 0)} operaciones`;
+	elements.salesBody.innerHTML = sales.length
+		? sales.map((sale) => {
+			const sign = sale.gain > 0 ? "positive" : sale.gain < 0 ? "negative" : "neutral";
+			return `<tr>
+				<td><span class="asset-cell">${escapeHtml(sale.name)}</span></td>
+				<td>${sale.transactions}</td>
+				<td>${numberFormatter.format(sale.quantity)}</td>
+				<td>${sale.averagePurchasePrice ? formatMoney(sale.averagePurchasePrice) : "—"}</td>
+				<td>${sale.averageSalePrice ? formatMoney(sale.averageSalePrice) : "—"}</td>
+				<td>${formatMoney(sale.invested)}</td>
+				<td>${formatMoney(sale.saleTotal)}</td>
+				<td class="gain-cell ${sign}">${formatMoney(sale.gain)}</td>
+				<td><span class="return-pill ${sign}">${sale.invested ? formatPercent(sale.returnPct) : "s/c"}</span></td>
+			</tr>`;
+		}).join("")
+		: '<tr><td colspan="9" class="empty-state">No hay operaciones cerradas registradas en la pestaña Ventas.</td></tr>';
+	if (!sales.length && totalRealized !== 0) elements.salesTotalTag.textContent = "Revisar datos";
 }
 
 async function loadPortfolio() {
 	elements.refresh.disabled = true;
 	elements.refresh.innerHTML = "⟳ Actualizando…";
 	elements.notice.classList.add("hidden");
-	elements.updated.textContent = "Leyendo Google Sheets…";
+		elements.updated.textContent = "Leyendo datos de Drive…";
 
 	try {
 		const response = await fetch("/api/portfolio", { cache: "no-store" });
 		const payload = await response.json();
 		if (!response.ok) throw new Error(payload.error || "No se pudo cargar la hoja.");
 
-		const assets = consolidateRows(payload.rows || []);
-		renderSummary(assets);
+		const assets = consolidateRows(payload.positions || []);
+		const sales = payload.sales || [];
+		renderSummary(assets, sales);
 		renderAllocation(assets);
 		renderComparison(assets);
 		renderPositions(assets);
+		renderSales(sales);
 		elements.updated.textContent = `Actualizado ${new Date(payload.updatedAt).toLocaleString("es-AR", { dateStyle: "medium", timeStyle: "short" })}`;
 	} catch (error) {
 		elements.updated.textContent = "No se pudieron actualizar los datos";
 		elements.notice.textContent = error.message;
 		elements.notice.classList.remove("hidden");
-		elements.positionsBody.innerHTML = '<tr><td colspan="8" class="empty-state">No hay datos conectados todavía.</td></tr>';
+		elements.positionsBody.innerHTML = '<tr><td colspan="7" class="empty-state">No hay datos conectados todavía.</td></tr>';
+		elements.salesBody.innerHTML = '<tr><td colspan="9" class="empty-state">No hay datos conectados todavía.</td></tr>';
 	} finally {
 		elements.refresh.disabled = false;
 		elements.refresh.innerHTML = "<span aria-hidden=\"true\">⟳</span> Actualizar";
@@ -262,4 +325,13 @@ async function loadPortfolio() {
 }
 
 elements.refresh.addEventListener("click", loadPortfolio);
+elements.salesToggle.addEventListener("click", () => {
+	const isExpanded = elements.salesToggle.getAttribute("aria-expanded") === "true";
+	elements.salesToggle.setAttribute("aria-expanded", String(!isExpanded));
+	elements.salesPanel.hidden = isExpanded;
+
+	if (!isExpanded) {
+		elements.salesPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+	}
+});
 loadPortfolio();

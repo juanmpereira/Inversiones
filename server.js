@@ -11,6 +11,7 @@ const HOST = "0.0.0.0";
 const ROOT = __dirname;
 const DRIVE_FILE_ID = process.env.GOOGLE_DRIVE_FILE_ID || process.env.GOOGLE_SHEETS_ID || "1O2XLiCvGjeYsaBbRVxcSn2Ns4Yj_DNJv";
 const SHEET_NAME = process.env.GOOGLE_SHEETS_NAME || "Cartera dols";
+const SALES_SHEET_NAME = process.env.GOOGLE_SALES_SHEET_NAME || "Ventas";
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -69,6 +70,10 @@ function createDriveClient() {
 function getCellValue(value) {
   if (value === null || value === undefined) return "";
   if (typeof value !== "object") return value;
+  if (typeof value.formula === "string") {
+    const fraction = value.formula.match(/^\s*(-?\d+(?:\.\d+)?)\s*\/\s*(-?\d+(?:\.\d+)?)\s*$/);
+    if (fraction && Number(fraction[2]) !== 0) return Number(fraction[1]) / Number(fraction[2]);
+  }
   if (Object.prototype.hasOwnProperty.call(value, "result")) return value.result ?? "";
   if (Array.isArray(value.richText)) return value.richText.map((part) => part.text || "").join("");
   if (typeof value.text === "string") return value.text;
@@ -120,31 +125,100 @@ async function getPortfolioRows() {
     throw new Error(`No se encontró la pestaña «${SHEET_NAME}» en el archivo de Drive.`);
   }
 
-  const rows = [];
-  for (let rowNumber = 1; rowNumber <= worksheet.rowCount; rowNumber += 1) {
-    const worksheetRow = worksheet.getRow(rowNumber);
-    rows.push(Array.from({ length: 9 }, (_, index) => getCellValue(worksheetRow.getCell(index + 1).value)));
-  }
+  const readRows = (sheet, columnCount) => {
+    const rows = [];
+    for (let rowNumber = 1; rowNumber <= sheet.rowCount; rowNumber += 1) {
+      const worksheetRow = sheet.getRow(rowNumber);
+      rows.push(Array.from({ length: columnCount }, (_, index) => getCellValue(worksheetRow.getCell(index + 1).value)));
+    }
+    return rows;
+  };
 
-  const headerIndex = rows.findIndex((row) => row.some((cell) => normalizeHeader(cell) === "activo"));
+  const positionRows = readRows(worksheet, 12);
+  const headerIndex = positionRows.findIndex((row) => row.some((cell) => normalizeHeader(cell) === "activo"));
 
   if (headerIndex < 0) {
     throw new Error(`No se encontró la tabla de activos en la pestaña «${SHEET_NAME}».`);
   }
 
-  const headers = rows[headerIndex].map(normalizeHeader);
-  const purchasePriceIndex = headers.indexOf("precio compra");
+  const positionHeaders = positionRows[headerIndex].map(normalizeHeader);
+  const purchasePriceIndex = positionHeaders.indexOf("precio compra");
   if (purchasePriceIndex < 0) {
     throw new Error("No se encontró la columna «Precio Compra» en la tabla de activos.");
   }
 
-  const tableRows = rows.slice(headerIndex + 1);
-  const endIndex = tableRows.findIndex((row) => {
+  const positionTableRows = positionRows.slice(headerIndex + 1);
+  const endIndex = positionTableRows.findIndex((row) => {
     const value = row[purchasePriceIndex];
     return value === "" || value === null || value === undefined;
   });
+  const positions = [positionRows[headerIndex], ...positionTableRows.slice(0, endIndex < 0 ? positionTableRows.length : endIndex)];
 
-  return [rows[headerIndex], ...tableRows.slice(0, endIndex < 0 ? tableRows.length : endIndex)];
+  const salesWorksheet = workbook.getWorksheet(SALES_SHEET_NAME);
+  let sales = [];
+  if (salesWorksheet) {
+    const salesRows = readRows(salesWorksheet, 10);
+    const salesHeaderIndex = salesRows.findIndex((row) => row.some((cell) => normalizeHeader(cell) === "cerrado"));
+
+    if (salesHeaderIndex >= 0) {
+      const salesHeaders = salesRows[salesHeaderIndex].map(normalizeHeader);
+      const salesColumn = (name) => salesHeaders.indexOf(normalizeHeader(name));
+      const assetColumn = salesColumn("Cerrado");
+      const quantityColumn = salesColumn("Cantidad");
+      const purchaseColumn = salesColumn("Precio compra");
+      const salePriceColumn = salesColumn("Precio venta");
+      const gainColumn = salesColumn("Ganado");
+      const investedColumn = salesColumn("Invertido");
+      const saleTotalColumn = salesColumn("Total venta");
+      const salesByAsset = new Map();
+
+      for (const row of salesRows.slice(salesHeaderIndex + 1)) {
+        const assetName = String(row[assetColumn] || "").trim();
+        if (!assetName) break;
+
+        const key = assetName.toLocaleLowerCase("es");
+        if (!salesByAsset.has(key)) {
+          salesByAsset.set(key, {
+            name: assetName,
+            quantity: 0,
+            purchaseAmount: 0,
+            salePriceAmount: 0,
+            invested: 0,
+            saleTotal: 0,
+            gain: 0,
+            transactions: 0,
+          });
+        }
+
+        const sale = salesByAsset.get(key);
+        const quantity = Number(row[quantityColumn]) || 0;
+        const purchasePrice = Number(row[purchaseColumn]) || 0;
+        const salePrice = Number(row[salePriceColumn]) || 0;
+        const invested = Number(row[investedColumn]) || quantity * purchasePrice;
+        const saleTotal = Number(row[saleTotalColumn]) || 0;
+        const gain = Number(row[gainColumn]) || saleTotal - invested;
+
+        sale.quantity += quantity;
+        sale.purchaseAmount += quantity * purchasePrice;
+        sale.salePriceAmount += quantity * salePrice;
+        sale.invested += invested;
+        sale.saleTotal += saleTotal;
+        sale.gain += gain;
+        sale.transactions += 1;
+      }
+
+      sales = [...salesByAsset.values()]
+        .map((sale) => ({
+          ...sale,
+          averagePurchasePrice: sale.quantity ? sale.purchaseAmount / sale.quantity : 0,
+          averageSalePrice: sale.quantity ? sale.salePriceAmount / sale.quantity : 0,
+          returnPct: sale.invested ? (sale.gain / sale.invested) * 100 : 0,
+        }))
+        .sort((a, b) => b.gain - a.gain);
+    }
+  }
+
+  return { positions, sales };
 }
 
 function sendJson(res, statusCode, payload) {
@@ -199,7 +273,7 @@ const server = http.createServer((req, res) => {
     }
 
     getPortfolioRows()
-      .then((rows) => sendJson(res, 200, { rows, updatedAt: new Date().toISOString() }))
+      .then((portfolio) => sendJson(res, 200, { ...portfolio, updatedAt: new Date().toISOString() }))
       .catch((error) => {
         console.error("No se pudo leer Google Sheets:", error.message);
         sendJson(res, 503, {
