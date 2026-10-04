@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="655" viewBox="0 0 1000 655" role="img" aria-labelledby="title description">
+  <title id="title">Ejemplos de hojas para el tracker de inversiones</title>
+  <desc id="description">Cuatro miniaturas de pestañas de Google Sheets: Compras obligatoria, y Ventas, FCI y Liquidez opcionales, con encabezados y una fila de ejemplo.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f5f7fb; }
+      .card { fill: #fff; stroke: #e1e7ef; stroke-width: 1.5; }
+      .head { fill: #eaf0f8; }
+      .row { fill: #fff; }
+      .line { stroke: #e4e9f0; stroke-width: 1; }
+      .title { fill: #24324b; font: 700 17px Arial, sans-serif; }
+      .badge { fill: #e8f5ef; }
+      .badge-text { fill: #287456; font: 700 10px Arial, sans-serif; }
+      .optional { fill: #f0f2f6; }
+      .optional-text { fill: #6c778a; font: 700 10px Arial, sans-serif; }
+      .label { fill: #52617a; font: 700 10px Arial, sans-serif; }
+      .value { fill: #4f5b70; font: 10px Arial, sans-serif; }
+      .caption { fill: #8994a7; font: 11px Arial, sans-serif; }
+      .brand { fill: #54735f; }
+    </style>
+  </defs>
+  <rect class="bg" width="1000" height="655" rx="16"/>
+  <text x="24" y="32" class="title">Estructura del archivo</text>
+  <text x="24" y="51" class="caption">Cada bloque representa una hoja (pestaña) dentro del mismo archivo de Google Sheets.</text>
+
+  <g transform="translate(20 68)">
+    <rect class="card" width="960" height="190" rx="10"/>
+    <text x="18" y="27" class="title">Compras</text>
+    <rect class="badge" x="845" y="11" width="96" height="22" rx="11"/>
+    <text x="861" y="26" class="badge-text">OBLIGATORIA</text>
+    <text x="18" y="49" class="caption">Una fila por compra.</text>
+    <rect class="head" x="16" y="62" width="928" height="40" rx="4"/>
+    <rect class="row" x="16" y="103" width="928" height="38"/>
+    <path class="line" d="M16 102.5H944 M16 141.5H944"/>
+    <path class="line" d="M148 62V142 M280 62V142 M412 62V142 M544 62V142 M676 62V142 M808 62V142"/>
+    <text x="24" y="86" class="label">Fecha</text><text x="24" y="127" class="value">2026-06-30</text>
+    <text x="156" y="86" class="label">Simbolo</text><text x="156" y="127" class="value">SPY</text>
+    <text x="288" y="86" class="label">Tipo</text><text x="288" y="127" class="value">CEDEAR</text>
+    <text x="420" y="86" class="label">Cantidad</text><text x="420" y="127" class="value">21</text>
+    <text x="552" y="86" class="label">Moneda</text><text x="552" y="127" class="value">ARS</text>
+    <text x="684" y="86" class="label">Precio unitario</text><text x="684" y="127" class="value">19347,14</text>
+    <text x="816" y="86" class="label">Mep</text><text x="816" y="127" class="value">1519</text>
+    <text x="18" y="170" class="caption">Tipo: CEDEAR o Acción USA · Moneda: ARS o USD · MEP en pesos por dólar.</text>
+  </g>
+
+  <g transform="translate(20 276)">
+    <rect class="card" width="470" height="185" rx="10"/>
+    <text x="18" y="27" class="title">Ventas</text>
+    <rect class="optional" x="355" y="11" width="96" height="22" rx="11"/>
+    <text x="373" y="26" class="optional-text">OPCIONAL</text>
+    <text x="18" y="49" class="caption">Una fila por venta.</text>
+    <rect class="head" x="16" y="62" width="438" height="40" rx="4"/>
+    <rect class="row" x="16" y="103" width="438" height="38"/>
+    <path class="line" d="M16 102.5H454 M16 141.5H454"/>
+    <path class="line" d="M89 62V142 M162 62V142 M235 62V142 M308 62V142 M381 62V142"/>
+    <text x="21" y="86" class="label">Fecha</text><text x="21" y="127" class="value">2026-08-27</text>
+    <text x="94" y="86" class="label">Simbolo</text><text x="94" y="127" class="value">IBIT</text>
+    <text x="167" y="86" class="label">Cantidad</text><text x="167" y="127" class="value">39</text>
+    <text x="240" y="86" class="label">Moneda</text><text x="240" y="127" class="value">ARS</text>
+    <text x="313" y="86" class="label">Precio Unitario</text><text x="313" y="127" class="value">7245</text>
+    <text x="386" y="86" class="label">Mep</text><text x="386" y="127" class="value">1542</text>
+    <text x="18" y="166" class="caption">Si no existe, no se muestra la sección de ventas.</text>
+  </g>
+
+  <g transform="translate(510 276)">
+    <rect class="card" width="470" height="185" rx="10"/>
+    <text x="18" y="27" class="title">FCI</text>
+    <rect class="optional" x="355" y="11" width="96" height="22" rx="11"/>
+    <text x="373" y="26" class="optional-text">OPCIONAL</text>
+    <text x="18" y="49" class="caption">Valores manuales; columnas como en el archivo actual.</text>
+    <rect class="head" x="16" y="62" width="438" height="40" rx="4"/>
+    <rect class="row" x="16" y="103" width="438" height="38"/>
+    <path class="line" d="M16 102.5H454 M16 141.5H454"/>
+    <path class="line" d="M70 62V142 M124 62V142 M178 62V142 M232 62V142 M286 62V142 M340 62V142 M394 62V142"/>
+    <text x="19" y="86" class="label">Activo</text><text x="19" y="127" class="value">FCI</text>
+    <text x="73" y="86" class="label">Cant.</text><text x="73" y="127" class="value">1</text>
+    <text x="127" y="86" class="label">P. compra</text><text x="127" y="127" class="value">100</text>
+    <text x="181" y="86" class="label">Invertido</text><text x="181" y="127" class="value">100</text>
+    <text x="235" y="86" class="label">Valor act.</text><text x="235" y="127" class="value">102</text>
+    <text x="289" y="86" class="label">Ganancia $</text><text x="289" y="127" class="value">2</text>
+    <text x="343" y="86" class="label">Gan. %</text><text x="343" y="127" class="value">2</text>
+    <text x="397" y="86" class="label">P. actual</text><text x="397" y="127" class="value">102</text>
+    <text x="18" y="166" class="caption">Si no existe, se omiten los fondos de la cartera.</text>
+  </g>
+
+  <g transform="translate(20 479)">
+    <rect class="card" width="960" height="165" rx="10"/>
+    <text x="18" y="27" class="title">Liquidez</text>
+    <rect class="optional" x="845" y="11" width="96" height="22" rx="11"/>
+    <text x="863" y="26" class="optional-text">OPCIONAL</text>
+    <text x="18" y="49" class="caption">Efectivo; categoría Liquidez o Reserva.</text>
+    <rect class="head" x="16" y="62" width="928" height="40" rx="4"/>
+    <rect class="row" x="16" y="103" width="928" height="38"/>
+    <path class="line" d="M16 102.5H944 M16 141.5H944"/>
+    <path class="line" d="M248 62V142 M480 62V142 M712 62V142"/>
+    <text x="24" y="86" class="label">Concepto</text><text x="24" y="127" class="value">Banco</text>
+    <text x="256" y="86" class="label">Categoria</text><text x="256" y="127" class="value">Liquidez</text>
+    <text x="488" y="86" class="label">Moneda</text><text x="488" y="127" class="value">ARS</text>
+    <text x="720" y="86" class="label">Importe</text><text x="720" y="127" class="value">3500000</text>
+    <text x="18" y="158" class="caption">Solo liquidez en ARS entra en la distribución.</text>
+  </g>
+</svg>
