@@ -116,26 +116,6 @@ h1 { margin-bottom: 6px; color: #202a42; font-size: 30px; letter-spacing: -1.2px
 .legend-dot { width: 8px; height: 8px; border-radius: 3px; }
 .legend-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .legend-value { color: #303c55; font-weight: 650; }
-.bar-legend { display: flex; gap: 16px; padding: 15px 0 10px; color: #8993a8; font-size: 10px; }
-.bar-legend span { display: flex; align-items: center; gap: 6px; }
-.legend-swatch { width: 8px; height: 8px; border-radius: 3px; }
-.invested-swatch { background: #aab6ca; }
-.current-swatch { background: #5977b5; }
-.comparison-note { margin: 0 0 12px; color: #8b95a8; font-size: 9px; line-height: 1.45; }
-.comparison-chart { display: grid; max-height: 280px; gap: 12px; overflow-y: auto; padding: 7px 4px 5px 0; }
-.comparison-row { display: grid; grid-template-columns: minmax(54px, 76px) minmax(70px, 1fr) 86px; align-items: center; gap: 9px; }
-.comparison-asset { display: grid; min-width: 0; gap: 3px; }
-.comparison-name { overflow: hidden; color: #526078; font-size: 10px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
-.comparison-delta { font-size: 9px; font-weight: 700; }
-.comparison-delta.positive { color: var(--green) !important; }
-.comparison-delta.negative { color: var(--red) !important; }
-.comparison-delta.neutral { color: var(--muted) !important; }
-.comparison-values { display: grid; gap: 4px; color: #68738a; font-size: 9px; font-variant-numeric: tabular-nums; text-align: right; }
-.bar-pair { display: grid; gap: 5px; }
-.bar-track { display: block; width: 100%; height: 9px; overflow: hidden; border-radius: 10px; background: #eef1f6; }
-.bar-fill { display: block; height: 100%; min-width: 2px; border-radius: inherit; }
-.bar-fill.invested { background: #aab6ca; }
-.bar-fill.current { background: #5977b5; }
 .positions-panel, .sales-panel, .liquidity-panel, .company-panel { margin-top: 16px; padding-bottom: 12px; }
 .sales-panel[hidden] { display: none; }
 .positions-heading { align-items: center; margin-bottom: 19px; }
@@ -186,8 +166,6 @@ tbody tr:last-child td { border-bottom: 0; }
   .panel { padding: 17px 13px; }
   .allocation-content { flex-direction: column; gap: 18px; }
   .legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .comparison-row { grid-template-columns: minmax(48px, 64px) minmax(55px, 1fr) 78px; gap: 7px; }
-  .comparison-values { font-size: 8px; }
   .positions-heading { align-items: start; }
   table { min-width: 700px; }
   .sales-panel table { min-width: 900px; }

@@ -40,7 +40,6 @@ const elements = {
 	allocationChart: document.querySelector("#allocation-chart"),
 	allocationCount: document.querySelector("#allocation-count"),
 	allocationLegend: document.querySelector("#allocation-legend"),
-	comparisonChart: document.querySelector("#comparison-chart"),
 	positionsBody: document.querySelector("#positions-body"),
 	liquidityTotal: document.querySelector("#liquidity-total"),
 	liquidityCard: document.querySelector("#liquidity-card"),
@@ -285,9 +284,11 @@ function renderAllocation(assets, liquidity) {
 	];
 	const total = allocationAssets.reduce((sum, asset) => sum + Math.max(asset.currentValueUsd, 0), 0);
 	const sorted = [...allocationAssets].sort((a, b) => b.currentValueUsd - a.currentValueUsd);
-	const visible = sorted.slice(0, 6);
-	const others = sorted.slice(6).reduce((sum, asset) => sum + Math.max(asset.currentValueUsd, 0), 0);
-	if (others > 0) visible.push({ name: "Otros", currentValueUsd: others });
+	const visible = sorted.slice(0, 10);
+	if (sorted.length > 10) {
+		const others = sorted.slice(10).reduce((sum, asset) => sum + Math.max(asset.currentValueUsd, 0), 0);
+		if (others > 0) visible.push({ name: "Otros", currentValueUsd: others });
+	}
 
 	let cursor = 0;
 	const segments = visible.map((asset, index) => {
@@ -306,30 +307,6 @@ function renderAllocation(assets, liquidity) {
 			return `<div class="legend-item"><i class="legend-dot" style="background:${COLORS[index % COLORS.length]}"></i><span class="legend-label">${escapeHtml(asset.name)}</span><span class="legend-value">${formatPercent(share)}</span></div>`;
 		}).join("")
 		: '<span class="empty-state">Sin datos para mostrar</span>';
-}
-
-function renderComparison(assets) {
-	const largestMovers = assets
-		.filter((asset) => !isExcludedFromAllocation(asset))
-		.filter((asset) => asset.costUsd > 0 || asset.currentValueUsd > 0)
-		.sort((a, b) => Math.abs(b.returnPct) - Math.abs(a.returnPct))
-		.slice(0, 8);
-	elements.comparisonChart.innerHTML = largestMovers.length
-		? largestMovers.map((asset) => {
-			const pairMaximum = Math.max(asset.costUsd, asset.currentValueUsd, 1);
-			const investedWidth = Math.max(0, (asset.costUsd / pairMaximum) * 100);
-			const currentWidth = Math.max(0, (asset.currentValueUsd / pairMaximum) * 100);
-			const performanceClass = asset.returnPct > 0 ? "positive" : asset.returnPct < 0 ? "negative" : "neutral";
-			return `<div class="comparison-row" title="${escapeHtml(asset.symbol)} — invertido: ${formatUSD(asset.costUsd)}; valor actual: ${formatUSD(asset.currentValueUsd)}; rendimiento: ${formatPercent(asset.returnPct)}">
-				<span class="comparison-asset"><span class="comparison-name">${escapeHtml(asset.symbol)}</span><span class="comparison-delta ${performanceClass}">${formatPercent(asset.returnPct)}</span></span>
-				<span class="bar-pair">
-					<span class="bar-track"><span class="bar-fill invested" style="width:${investedWidth}%"></span></span>
-					<span class="bar-track"><span class="bar-fill current" style="width:${currentWidth}%"></span></span>
-				</span>
-				<span class="comparison-values"><span>${formatUSD(asset.costUsd)}</span><span>${formatUSD(asset.currentValueUsd)}</span></span>
-			</div>`;
-		}).join("")
-		: '<p class="empty-state">Sin datos para comparar.</p>';
 }
 
 function renderPositions(assets, liquidity) {
@@ -434,7 +411,6 @@ async function loadPortfolio() {
 		elements.ownCapitalFoot.textContent = hasSalesSheet ? "Abierto menos resultado neto de ventas*" : "Igual al invertido abierto";
 		elements.cumulativeGainFoot.textContent = hasSalesSheet ? "Abiertas + ventas cerradas" : "Resultado abierto";
 		renderAllocation(assets, liquidity);
-		renderComparison(assets);
 		renderPositions(assets, liquidity);
 		renderLiquidity(liquidity);
 		renderCompanyShares(companyShares);
