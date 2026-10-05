@@ -101,130 +101,159 @@
         </div>
       </header>
 
+      <nav class="view-nav" aria-label="Navegación principal">
+        <button class="view-nav-button active" id="home-nav" type="button" aria-current="page">Inicio</button>
+        <button class="view-nav-button" id="portfolio-nav" type="button">Mi cartera</button>
+        <button class="view-nav-button" id="targets-nav" type="button">Composición objetivo</button>
+      </nav>
+
       <section class="page-heading">
         <div>
-          <p class="eyebrow">TU RESUMEN FINANCIERO</p>
-          <h1>Mi cartera</h1>
-          <p class="subtitle">Una mirada clara a tus inversiones y su evolución.</p>
+          <p class="eyebrow" id="page-eyebrow">TU RESUMEN FINANCIERO</p>
+          <h1 id="page-title">Inicio</h1>
+          <p class="subtitle" id="page-subtitle">Una mirada clara a tus inversiones y su evolución.</p>
         </div>
         <p class="last-updated" id="last-updated">Conectando con Google Drive…</p>
       </section>
 
       <section class="notice hidden" id="notice" role="status" aria-live="polite"></section>
 
-      <section class="metric-grid" aria-label="Resumen de cartera">
-        <article class="metric-card total-card">
-          <div class="metric-label">Patrimonio financiero · USD <span class="metric-icon">◈</span></div>
-          <div class="metric-value" id="total-current">—</div>
-          <div class="metric-foot" id="holdings-count">Esperando datos de la hoja</div>
-        </article>
-        <article class="metric-card" id="liquidity-card" hidden>
-          <div class="metric-label">Liquidez · USD <span class="metric-icon">↔</span></div>
-          <div class="metric-value" id="liquidity-total">—</div>
-          <div class="metric-foot" id="liquidity-total-ars">Disponible en pesos y reservas USD</div>
-        </article>
-        <article class="metric-card">
-          <div class="metric-label">Invertido abierto · USD <span class="metric-icon">↗</span></div>
-          <div class="metric-value" id="total-invested">—</div>
-          <div class="metric-foot">Costo de las posiciones que seguís teniendo</div>
-        </article>
-        <article class="metric-card estimate-card">
-          <div class="metric-label">Capital propio estimado · USD <span class="metric-icon">≈</span></div>
-          <div class="metric-value" id="own-capital-estimate">—</div>
-          <div class="metric-foot" id="own-capital-foot">Abierto menos resultado neto de ventas*</div>
-        </article>
-        <article class="metric-card">
-          <div class="metric-label">Resultado abierto · USD <span class="metric-icon">±</span></div>
-          <div class="metric-value" id="total-gain">—</div>
-          <div class="metric-foot" id="total-return">Resultado de posiciones abiertas</div>
-        </article>
-        <button class="metric-card sales-toggle" id="sales-toggle" type="button" aria-expanded="false" aria-controls="sales-panel" hidden>
-          <div class="metric-label">Ganado en ventas · USD <span class="metric-icon">✓</span></div>
-          <div class="metric-value" id="realized-gain">—</div>
-          <div class="metric-foot"><span id="sales-count">Ventas cerradas registradas</span><span class="sales-toggle-hint" aria-hidden="true"> Ver detalle ↓</span></div>
-        </button>
-        <article class="metric-card">
-          <div class="metric-label">Ganancia acumulada · USD <span class="metric-icon">Σ</span></div>
-          <div class="metric-value" id="cumulative-gain">—</div>
-          <div class="metric-foot" id="cumulative-gain-foot">Abiertas + ventas cerradas</div>
-        </article>
-        <article class="metric-card">
-          <div class="metric-label">Mejor rendimiento <span class="metric-icon">✦</span></div>
-          <div class="metric-value metric-feature" id="best-performer">—</div>
-          <div class="metric-foot" id="best-performer-foot">Entre las posiciones con costo cargado</div>
-        </article>
-      </section>
+      <section class="dashboard-view" id="home-view" aria-label="Inicio">
+        <section class="metric-grid" aria-label="Resumen de cartera">
+          <article class="metric-card total-card">
+            <div class="metric-label">Patrimonio total · USD <span class="metric-icon">◈</span></div>
+            <div class="metric-value" id="total-current">—</div>
+            <div class="metric-foot" id="holdings-count">Esperando datos de la hoja</div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-label">Invertido · USD <span class="metric-icon">↗</span></div>
+            <div class="metric-value" id="total-invested">—</div>
+            <div class="metric-foot">Costo de las inversiones que seguís teniendo</div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-label">Ganancia total · USD <span class="metric-icon">Σ</span></div>
+            <div class="metric-value" id="cumulative-gain">—</div>
+            <div class="metric-foot" id="cumulative-gain-foot">Posiciones abiertas + ventas realizadas</div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-label">Mejor rendimiento <span class="metric-icon">✦</span></div>
+            <div class="metric-value metric-feature" id="best-performer">—</div>
+            <div class="metric-foot" id="best-performer-foot">Entre las posiciones con costo cargado</div>
+          </article>
+        </section>
 
-      <section class="charts-grid" aria-label="Gráficos de la cartera">
-        <article class="panel allocation-panel">
-          <div class="panel-heading">
-            <div><p class="eyebrow">DISTRIBUCIÓN</p><h2>¿Dónde está mi cartera?</h2></div>
-            <span class="panel-tag">Sin fondos de reserva</span>
-          </div>
-          <div class="allocation-content">
-            <div class="donut-wrap">
-              <div class="donut" id="allocation-chart" role="img" aria-label="Distribución de la cartera por activo">
-                <div class="donut-hole"><strong id="allocation-count">—</strong><span>activos</span></div>
-              </div>
+        <section class="charts-grid" aria-label="Gráficos de la cartera">
+          <article class="panel allocation-panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">DISTRIBUCIÓN</p><h2>¿Dónde está mi cartera?</h2></div>
+              <span class="panel-tag">Sin fondos de reserva</span>
             </div>
-            <div class="legend" id="allocation-legend"></div>
+            <div class="allocation-content">
+              <div class="donut-wrap">
+                <div class="donut" id="allocation-chart" role="img" aria-label="Distribución de la cartera por activo">
+                  <div class="donut-hole"><strong id="allocation-count">—</strong><span>activos</span></div>
+                </div>
+              </div>
+              <div class="legend" id="allocation-legend"></div>
+            </div>
+          </article>
+        </section>
+      </section>
+
+      <section class="dashboard-view" id="portfolio-view" aria-label="Mi cartera" hidden>
+        <section class="panel positions-panel">
+          <div class="panel-heading positions-heading">
+            <div><p class="eyebrow">TUS POSICIONES</p><h2>Rendimiento por activo</h2><p class="panel-subtitle">Antigüedad promedio de las unidades abiertas; ordenado de mayor a menor rendimiento porcentual.</p></div>
+            <span class="panel-tag">Datos de tu hoja</span>
           </div>
-        </article>
+          <div class="table-wrap">
+            <table class="positions-table">
+              <thead><tr><th>Símbolo</th><th>Peso</th><th>Ganancia USD</th><th>Rendimiento</th><th>Antigüedad</th></tr></thead>
+              <tbody id="positions-body"><tr><td colspan="5" class="empty-state">Cargando posiciones…</td></tr></tbody>
+            </table>
+          </div>
+          <p class="table-note">Las ventas reducen la cantidad y el costo promedio ponderado de la posición. La antigüedad es un promedio ponderado por las unidades que conservás; los FCI sin fecha de operación muestran —. Las cotizaciones de CEDEARs se convierten a USD al MEP actual.</p>
+        </section>
 
+        <section class="panel liquidity-panel" id="liquidity-panel" hidden>
+          <div class="panel-heading positions-heading">
+            <div><p class="eyebrow">EFECTIVO Y RESERVAS</p><h2>Liquidez</h2><p class="panel-subtitle">El saldo en pesos entra en la distribución; las reservas en USD quedan fuera.</p></div>
+            <span class="panel-tag" id="liquidity-count">Saldos manuales</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Concepto</th><th>Categoría</th><th>Moneda</th><th>Saldo</th><th>Equivalente USD</th><th>En distribución</th></tr></thead>
+              <tbody id="liquidity-body"><tr><td colspan="6" class="empty-state">Cargando saldos…</td></tr></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel company-panel" id="company-panel" hidden>
+          <div class="panel-heading positions-heading">
+            <div><p class="eyebrow">TENENCIA DE LA EMPRESA</p><h2>Acciones de empresa</h2><p class="panel-subtitle">Se muestran como patrimonio, no como inversión ni como efectivo disponible.</p></div>
+            <span class="panel-tag">Fuera de distribución</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Símbolo</th><th>Cantidad</th><th>Cotización</th><th>Valor actual USD</th><th>Valor actual ARS</th><th>Estado</th></tr></thead>
+              <tbody id="company-body"><tr><td colspan="6" class="empty-state">Cargando acciones…</td></tr></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel sales-panel" id="sales-panel" hidden>
+          <div class="panel-heading positions-heading">
+            <div><p class="eyebrow">OPERACIONES CERRADAS</p><h2>Ganancias realizadas</h2><p class="panel-subtitle">Costo asignado por promedio ponderado de las compras anteriores a cada venta.</p></div>
+            <span class="panel-tag" id="sales-total-tag">Ventas</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Símbolo</th><th>Operaciones</th><th>Cantidad vendida</th><th>Costo asignado USD</th><th>Recibido USD</th><th>Ganado USD</th><th>Ganado ARS</th><th>Rendimiento USD</th></tr></thead>
+              <tbody id="sales-body"><tr><td colspan="8" class="empty-state">Cargando ventas…</td></tr></tbody>
+            </table>
+          </div>
+          <p class="table-note">La ganancia total suma resultados abiertos y realizados; no implica efectivo disponible. Los valores de FCI se interpretan en USD y quedan manuales.</p>
+        </section>
       </section>
 
-      <section class="panel positions-panel">
-        <div class="panel-heading positions-heading">
-          <div><p class="eyebrow">TUS POSICIONES</p><h2>Rendimiento por activo</h2><p class="panel-subtitle">Compras menos cantidades vendidas; ordenado por resultado abierto en USD.</p></div>
-          <span class="panel-tag">Datos de tu hoja</span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Símbolo</th><th>Peso</th><th>Cantidad abierta</th><th>Compra prom. USD</th><th>Precio actual</th><th>Ganancia USD</th><th>Ganancia ARS</th><th>Rendimiento USD</th></tr></thead>
-            <tbody id="positions-body"><tr><td colspan="8" class="empty-state">Cargando posiciones…</td></tr></tbody>
-          </table>
-        </div>
-        <p class="table-note">Las ventas reducen la cantidad y el costo promedio ponderado de la posición. Las cotizaciones de CEDEARs se consultan en ARS y se convierten a USD al MEP actual.</p>
-      </section>
-
-      <section class="panel liquidity-panel" id="liquidity-panel" hidden>
-        <div class="panel-heading positions-heading">
-          <div><p class="eyebrow">EFECTIVO Y RESERVAS</p><h2>Liquidez</h2><p class="panel-subtitle">El saldo en pesos entra en la distribución; las reservas en USD quedan fuera.</p></div>
-          <span class="panel-tag" id="liquidity-count">Saldos manuales</span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Concepto</th><th>Categoría</th><th>Moneda</th><th>Saldo</th><th>Equivalente USD</th><th>En distribución</th></tr></thead>
-            <tbody id="liquidity-body"><tr><td colspan="6" class="empty-state">Cargando saldos…</td></tr></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="panel company-panel" id="company-panel" hidden>
-        <div class="panel-heading positions-heading">
-          <div><p class="eyebrow">TENENCIA DE LA EMPRESA</p><h2>Acciones de empresa</h2><p class="panel-subtitle">Se muestran como patrimonio, no como inversión ni como efectivo disponible.</p></div>
-          <span class="panel-tag">Fuera de distribución</span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Símbolo</th><th>Cantidad</th><th>Cotización</th><th>Valor actual USD</th><th>Valor actual ARS</th><th>Estado</th></tr></thead>
-            <tbody id="company-body"><tr><td colspan="6" class="empty-state">Cargando acciones…</td></tr></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="panel sales-panel" id="sales-panel" hidden>
-        <div class="panel-heading positions-heading">
-          <div><p class="eyebrow">OPERACIONES CERRADAS</p><h2>Ganancias realizadas</h2><p class="panel-subtitle">Costo asignado por promedio ponderado de las compras anteriores a cada venta.</p></div>
-          <span class="panel-tag" id="sales-total-tag">Ventas</span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Símbolo</th><th>Operaciones</th><th>Cantidad vendida</th><th>Costo asignado USD</th><th>Recibido USD</th><th>Ganado USD</th><th>Ganado ARS</th><th>Rendimiento USD</th></tr></thead>
-            <tbody id="sales-body"><tr><td colspan="8" class="empty-state">Cargando ventas…</td></tr></tbody>
-          </table>
-        </div>
-        <p class="table-note">*El capital propio estimado supone que reinvertiste todo el resultado neto de las ventas. La ganancia acumulada suma resultados abiertos y realizados; no implica efectivo disponible. Los valores de FCI se interpretan en USD y quedan manuales.</p>
+      <section class="dashboard-view" id="allocation-target-view" aria-label="Composición objetivo" hidden>
+        <section class="panel targets-panel">
+          <div class="panel-heading positions-heading">
+            <div>
+              <p class="eyebrow">REBALANCEO INFORMATIVO</p>
+              <h2>Definí cómo querés distribuir tu cartera</h2>
+              <p class="panel-subtitle">Asigná un porcentaje a cada activo y a liquidez. Los objetivos deben sumar 100%.</p>
+            </div>
+          </div>
+          <p class="target-calculator-note">El cálculo usa posiciones cotizables y toda la liquidez disponible en la hoja. Sugiere unidades enteras y muestra el precio en la moneda de compra (ARS para CEDEARs, USD para acciones de EE. UU.). No incluye FCI ni acciones de Empresa, no modifica tu hoja ni considera comisiones, impuestos o reglas de tu broker.</p>
+          <div class="target-total" aria-live="polite">
+            <span>Valor considerado <strong id="target-portfolio-value">—</strong></span>
+            <span>Porcentaje asignado <strong id="target-percent-total">0,00%</strong></span>
+          </div>
+          <form class="target-add-form" id="target-add-form">
+            <label for="target-symbol-input">Agregar un activo</label>
+            <input id="target-symbol-input" name="symbol" type="text" maxlength="20" placeholder="Símbolo (por ejemplo, AAPL)" autocomplete="off" required>
+            <label class="visually-hidden" for="target-instrument-type">Tipo de activo</label>
+            <select id="target-instrument-type" name="instrumentType">
+              <option value="CEDEAR">CEDEAR · cotiza en pesos</option>
+              <option value="Acción EEUU">Acción en USD</option>
+            </select>
+            <button class="refresh-button" id="add-target-asset-button" type="submit">Agregar</button>
+          </form>
+          <div class="table-wrap">
+            <table class="target-table">
+              <thead><tr><th>Activo</th><th>Instrumento</th><th>Valor actual</th><th>Peso actual</th><th>Objetivo</th><th>Valor objetivo</th><th>Sugerencia</th><th></th></tr></thead>
+              <tbody id="allocation-targets-body"><tr><td colspan="8" class="empty-state">Cargando activos…</td></tr></tbody>
+            </table>
+          </div>
+          <div class="target-actions">
+            <p class="target-status" id="target-status" role="status" aria-live="polite">Distribuí los porcentajes hasta sumar 100%.</p>
+            <div>
+              <button class="refresh-button" id="save-targets-button" type="button" disabled>Guardar porcentajes</button>
+              <button class="target-calculate-button" id="calculate-targets-button" type="button" disabled>Calcular rebalanceo</button>
+            </div>
+          </div>
+        </section>
       </section>
 
       <footer class="disclaimer">Información de seguimiento basada en tu hoja de cálculo. No es asesoramiento financiero ni una recomendación de compra o venta.</footer>

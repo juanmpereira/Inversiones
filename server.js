@@ -44,7 +44,17 @@ database.exec(`
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     expires_at INTEGER NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS user_allocation_targets (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    asset_symbol TEXT NOT NULL,
+    target_percent REAL NOT NULL,
+    instrument_type TEXT NOT NULL DEFAULT 'CEDEAR',
+    PRIMARY KEY (user_id, asset_symbol)
+  );
 `);
+if (!database.prepare("PRAGMA table_info(user_allocation_targets)").all().some((column) => column.name === "instrument_type")) {
+  database.exec("ALTER TABLE user_allocation_targets ADD COLUMN instrument_type TEXT NOT NULL DEFAULT 'CEDEAR'");
+}
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -532,6 +542,7 @@ async function getPortfolioRows(fileId = DRIVE_FILE_ID) {
         quantity: 0,
         costArs: 0,
         costUsd: 0,
+        purchaseDateQuantity: 0,
         purchasedQuantity: 0,
         purchaseAmountArs: 0,
         purchaseAmountUsd: 0,
@@ -543,6 +554,7 @@ async function getPortfolioRows(fileId = DRIVE_FILE_ID) {
       asset.quantity += transaction.quantity;
       asset.costArs += transaction.costArs;
       asset.costUsd += transaction.costUsd;
+      asset.purchaseDateQuantity += Date.parse(`${transaction.date}T00:00:00Z`) * transaction.quantity;
       asset.purchasedQuantity += transaction.quantity;
       asset.purchaseAmountArs += transaction.costArs;
       asset.purchaseAmountUsd += transaction.costUsd;
@@ -555,11 +567,13 @@ async function getPortfolioRows(fileId = DRIVE_FILE_ID) {
 
     const averageCostArs = asset.quantity ? asset.costArs / asset.quantity : 0;
     const averageCostUsd = asset.quantity ? asset.costUsd / asset.quantity : 0;
+    const averagePurchaseDate = asset.quantity ? asset.purchaseDateQuantity / asset.quantity : 0;
     const costBasisArs = averageCostArs * transaction.quantity;
     const costBasisUsd = averageCostUsd * transaction.quantity;
     asset.quantity = Math.max(0, asset.quantity - transaction.quantity);
     asset.costArs = Math.max(0, asset.costArs - costBasisArs);
     asset.costUsd = Math.max(0, asset.costUsd - costBasisUsd);
+    asset.purchaseDateQuantity = Math.max(0, asset.purchaseDateQuantity - averagePurchaseDate * transaction.quantity);
 
     if (!salesBySymbol.has(transaction.symbol)) {
       salesBySymbol.set(transaction.symbol, {
@@ -604,6 +618,7 @@ async function getPortfolioRows(fileId = DRIVE_FILE_ID) {
       returnPct: asset.costUsd ? (gainUsd / asset.costUsd) * 100 : 0,
       averagePurchasePriceUsd: asset.quantity ? asset.costUsd / asset.quantity : 0,
       averagePurchasePriceArs: asset.quantity ? asset.costArs / asset.quantity : 0,
+      averagePurchaseDate: asset.quantity ? new Date(asset.purchaseDateQuantity / asset.quantity).toISOString().slice(0, 10) : null,
       isFci: false,
     };
   });
@@ -769,7 +784,7 @@ async function handleApiRequest(req, res, requestUrl) {
     return;
   }
 
-  if (["/api/register", "/api/login", "/api/logout", "/api/setup"].includes(pathname) && !isSameOrigin(req)) {
+  if (["/api/register", "/api/login", "/api/logout", "/api/setup", "/api/allocation-targets", "/api/allocation-target-quote"].includes(pathname) && !isSameOrigin(req)) {
     sendJson(res, 403, { error: "Origen de solicitud no permitido." });
     return;
   }
@@ -901,6 +916,119 @@ async function handleApiRequest(req, res, requestUrl) {
     } catch (error) {
       console.error("No se pudo leer Google Sheets:", error.message);
       sendJson(res, 503, { error: getSheetsErrorMessage(error) });
+    }
+    return;
+  }
+
+  if (pathname === "/api/allocation-targets") {
+    const user = getSessionUser(req);
+    if (!user) {
+      sendJson(res, 401, { error: "Iniciá sesión para administrar la composición objetivo." });
+      return;
+    }
+
+    if (method === "GET") {
+      const targets = database.prepare(`
+        SELECT asset_symbol AS symbol, target_percent AS targetPercent, instrument_type AS instrumentType
+        FROM user_allocation_targets
+        WHERE user_id = ?
+      `).all(user.id);
+      sendJson(res, 200, { targets });
+      return;
+    }
+
+    if (method !== "PUT") {
+      sendJson(res, 405, { error: "Método no permitido." });
+      return;
+    }
+
+    try {
+      const body = await readJsonBody(req);
+      if (!Array.isArray(body.targets) || body.targets.length > 100) {
+        sendJson(res, 400, { error: "La lista de porcentajes no es válida." });
+        return;
+      }
+
+      const targets = [];
+      const seenSymbols = new Set();
+      for (const target of body.targets) {
+        if (!target || typeof target !== "object" || Array.isArray(target)) {
+          sendJson(res, 400, { error: "Cada objetivo debe tener un nombre y un porcentaje válido." });
+          return;
+        }
+        const symbol = String(target.symbol || "").trim().toUpperCase();
+        const targetPercent = target.targetPercent;
+        const instrumentType = target.instrumentType === "LIQUIDITY" ? "LIQUIDITY" : String(target.instrumentType || "");
+        const supportedTypes = ["CEDEAR", "Acción EEUU", "LIQUIDITY"];
+        if (!symbol || symbol.length > 100 || !Number.isFinite(targetPercent) || targetPercent < 0 || targetPercent > 100 || !supportedTypes.includes(instrumentType)) {
+          sendJson(res, 400, { error: "Cada activo debe tener un nombre y un porcentaje entre 0 y 100." });
+          return;
+        }
+        if ((symbol === "__LIQUIDITY__") !== (instrumentType === "LIQUIDITY")) {
+          sendJson(res, 400, { error: "El tipo de instrumento no coincide con el activo." });
+          return;
+        }
+        if (seenSymbols.has(symbol)) {
+          sendJson(res, 400, { error: `El activo ${symbol} aparece más de una vez.` });
+          return;
+        }
+        seenSymbols.add(symbol);
+        targets.push({ symbol, targetPercent, instrumentType });
+      }
+
+      const saveTargets = database.transaction(() => {
+        database.prepare("DELETE FROM user_allocation_targets WHERE user_id = ?").run(user.id);
+        const insert = database.prepare(`
+          INSERT INTO user_allocation_targets (user_id, asset_symbol, target_percent, instrument_type)
+          VALUES (?, ?, ?, ?)
+        `);
+        for (const target of targets) {
+          insert.run(user.id, target.symbol, target.targetPercent, target.instrumentType);
+        }
+      });
+      saveTargets();
+      sendJson(res, 200, { saved: true });
+    } catch (error) {
+      sendJson(res, error.statusCode || 500, { error: error.statusCode ? error.message : "No se pudieron guardar los porcentajes objetivo." });
+    }
+    return;
+  }
+
+  if (pathname === "/api/allocation-target-quote") {
+    const user = getSessionUser(req);
+    if (!user) {
+      sendJson(res, 401, { error: "Iniciá sesión para consultar la cotización." });
+      return;
+    }
+    if (method !== "POST") {
+      sendJson(res, 405, { error: "Método no permitido." });
+      return;
+    }
+
+    try {
+      const body = await readJsonBody(req);
+      const symbol = String(body.symbol || "").trim().toUpperCase();
+      const instrumentType = String(body.instrumentType || "");
+      if (!/^[A-Z0-9.^=_-]{1,20}$/.test(symbol) || !["CEDEAR", "Acción EEUU"].includes(instrumentType)) {
+        sendJson(res, 400, { error: "Ingresá un símbolo válido y elegí CEDEAR o acción en USD." });
+        return;
+      }
+
+      const quote = await getQuote(symbol, instrumentType);
+      const expectedCurrency = instrumentType === "CEDEAR" ? "ARS" : "USD";
+      if (quote.currency !== expectedCurrency) {
+        sendJson(res, 422, { error: `La cotización de ${symbol} aparece en ${quote.currency}, pero el tipo elegido requiere ${expectedCurrency}. Revisá el símbolo o elegí el otro tipo.` });
+        return;
+      }
+      sendJson(res, 200, {
+        symbol,
+        instrumentType,
+        currentPrice: quote.price,
+        currentPriceCurrency: quote.currency,
+        quoteDate: quote.quoteDate,
+      });
+    } catch (error) {
+      sendJson(res, error.statusCode || 502, { error: error.statusCode ? error.message : error.message || "No se pudo consultar la cotización." });
     }
     return;
   }
