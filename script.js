@@ -38,6 +38,8 @@ const elements = {
 	totalInvested: document.querySelector("#total-invested"),
 	cumulativeGain: document.querySelector("#cumulative-gain"),
 	holdingsCount: document.querySelector("#holdings-count"),
+	priceTargetAlerts: document.querySelector("#price-target-alerts"),
+	priceTargetAlertList: document.querySelector("#price-target-alert-list"),
 	bestPerformer: document.querySelector("#best-performer"),
 	bestPerformerFoot: document.querySelector("#best-performer-foot"),
 	allocationChart: document.querySelector("#allocation-chart"),
@@ -119,6 +121,10 @@ function formatARS(value) {
 
 function formatMoney(value) {
 	return formatUSD(value);
+}
+
+function formatQuotePrice(value, currency) {
+	return currency === "ARS" ? formatARS(value) : formatUSD(value);
 }
 
 function roundMoney(value) {
@@ -294,6 +300,7 @@ function renderSummary(assets, sales, liquidity, companyShares) {
 	const cumulativeUsd = roundMoney(unrealizedUsd + realizedUsd);
 	const cumulativeArs = roundMoney(unrealizedArs + realizedArs);
 	const bestReturn = assets.filter((asset) => asset.costUsd > 0 && !asset.isFci).sort((a, b) => b.returnPct - a.returnPct)[0];
+	renderPriceTargetAlerts(assets);
 
 	elements.totalCurrent.textContent = formatUSD(totalCurrentUsd);
 	elements.holdingsCount.textContent = `${formatARS(totalCurrentArs)} · inversiones, efectivo y empresa`;
@@ -310,6 +317,17 @@ function renderSummary(assets, sales, liquidity, companyShares) {
 		elements.bestPerformer.textContent = "—";
 		elements.bestPerformerFoot.textContent = "Sin posiciones con costo";
 	}
+}
+
+function renderPriceTargetAlerts(assets) {
+	const reachedTargets = assets.filter((asset) => asset.targetReached);
+	elements.priceTargetAlerts.hidden = reachedTargets.length === 0;
+	elements.priceTargetAlertList.innerHTML = reachedTargets.map((asset) => `
+		<li class="price-target-alert-item">
+			<strong>${escapeHtml(asset.symbol)}</strong>
+			<span>Objetivo: ${formatQuotePrice(asset.targetPrice, asset.targetPriceCurrency)} · acción subyacente: ${formatQuotePrice(asset.targetCurrentPrice, asset.targetCurrentPriceCurrency)}</span>
+		</li>
+	`).join("");
 }
 
 function renderAllocation(assets, liquidity) {

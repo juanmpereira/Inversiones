@@ -76,7 +76,7 @@
             <figcaption>Vista de ejemplo: cada bloque corresponde a una pestaña y muestra encabezados más una fila de referencia.</figcaption>
           </figure>
           <ul class="sheet-columns-list">
-            <li><strong>Compras (obligatoria):</strong> Fecha, Simbolo, Tipo, Cantidad, Moneda, Precio unitario, Mep.</li>
+            <li><strong>Compras (obligatoria):</strong> Fecha, Simbolo, Tipo, Cantidad, Moneda, Precio unitario y Mep. <strong>Precio objetivo</strong> es opcional y se expresa en USD, como el precio de la acción subyacente (también para CEDEARs).</li>
             <li><strong>Ventas (opcional):</strong> Fecha, Simbolo, Cantidad, Moneda, Precio Unitario, Mep.</li>
             <li><strong>FCI (opcional):</strong> Activo, Cantidad, Precio Compra, Invertido, Valor Actual, Ganancia $, Ganancia %, Precio Actual.</li>
             <li><strong>Liquidez (opcional):</strong> Concepto, Categoria, Moneda, Importe.</li>
@@ -119,6 +119,14 @@
       <section class="notice hidden" id="notice" role="status" aria-live="polite"></section>
 
       <section class="dashboard-view" id="home-view" aria-label="Inicio">
+        <section class="panel price-target-alerts" id="price-target-alerts" aria-label="Alertas de precio objetivo" role="status" aria-live="polite" hidden>
+          <div class="panel-heading">
+            <div><p class="eyebrow">PRECIO OBJETIVO</p><h2>¡Objetivo alcanzado!</h2></div>
+            <span class="target-alert-icon" aria-hidden="true">✓</span>
+          </div>
+          <ul class="price-target-alert-list" id="price-target-alert-list"></ul>
+        </section>
+
         <section class="metric-grid" aria-label="Resumen de cartera">
           <article class="metric-card total-card">
             <div class="metric-label">Patrimonio total · USD <span class="metric-icon">◈</span></div>
@@ -229,6 +237,7 @@
           <div class="target-total" aria-live="polite">
             <span>Valor considerado <strong id="target-portfolio-value">—</strong></span>
             <span>Porcentaje asignado <strong id="target-percent-total">0,00%</strong></span>
+            <span><span id="target-percent-remaining-label">Falta para completar</span> <strong id="target-percent-remaining">100,00%</strong></span>
           </div>
           <form class="target-add-form" id="target-add-form">
             <label for="target-symbol-input">Agregar un activo</label>

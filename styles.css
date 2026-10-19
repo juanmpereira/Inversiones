@@ -85,6 +85,14 @@ h1 { margin-bottom: 6px; color: #202a42; font-size: 30px; letter-spacing: -1.2px
 .last-updated { margin-bottom: 4px; text-align: right; }
 .notice { margin-bottom: 16px; padding: 13px 16px; border: 1px solid #f0d9a8; border-radius: 9px; color: #785a17; background: #fff9e9; font-size: 12px; line-height: 1.5; }
 .notice.hidden { display: none; }
+.price-target-alerts[hidden] { display: none; }
+.price-target-alerts { margin-bottom: 16px; padding: 17px 20px; border-color: #cce8d9; background: linear-gradient(110deg, #f2fbf6, #fff); }
+.price-target-alerts .panel-heading { margin-bottom: 10px; }
+.price-target-alerts h2 { margin: 0; color: #246247; font-size: 16px; }
+.target-alert-icon { display: grid; width: 29px; height: 29px; place-items: center; border-radius: 50%; color: #fff; background: #39a879; font-size: 15px; font-weight: 700; }
+.price-target-alert-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.price-target-alert-item { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; color: #587367; font-size: 11px; }
+.price-target-alert-item strong { color: #246247; }
 .dashboard-view { display: block; }
 .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; }
 .metric-card, .panel { border: 1px solid #e9edf4; border-radius: 12px; background: #fff; box-shadow: 0 3px 12px rgb(27 42 72 / 2.5%); }

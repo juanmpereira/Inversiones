@@ -326,6 +326,10 @@ function getHeaderMap(rows, marker, sheetName) {
       if (index < 0) throw new Error(`Falta la columna «${name}» en la pestaña «${sheetName}».`);
       return index;
     },
+    getOptional(name) {
+      const index = headers.indexOf(normalizeHeader(name));
+      return index < 0 ? null : index;
+    },
   };
 }
 
@@ -430,8 +434,9 @@ async function getPortfolioRows(fileId = DRIVE_FILE_ID) {
     throw new Error(`Faltan estas pestañas en el archivo: ${missing.join(", ")}.`);
   }
 
-  const purchasesRows = rowsFromWorksheet(purchasesWorksheet, 12);
+  const purchasesRows = rowsFromWorksheet(purchasesWorksheet, Math.max(12, purchasesWorksheet.columnCount));
   const purchasesHeader = getHeaderMap(purchasesRows, "Simbolo", PURCHASES_SHEET_NAME);
+  const targetPriceColumn = purchasesHeader.getOptional("Precio objetivo");
   const purchaseColumn = {
     date: purchasesHeader.get("Fecha"),
     symbol: purchasesHeader.get("Simbolo"),
@@ -501,7 +506,12 @@ async function getPortfolioRows(fileId = DRIVE_FILE_ID) {
     const nativeAmount = quantity * unitPrice;
     const costArs = currency === "ARS" ? nativeAmount : nativeAmount * mep;
     const costUsd = currency === "USD" ? nativeAmount : nativeAmount / mep;
-    transactions.push({ kind: "buy", date, symbol, type, quantity, costArs, costUsd, unitPrice, currency, mep });
+    const targetPriceInput = targetPriceColumn === null ? "" : String(row[targetPriceColumn] ?? "").trim();
+    const targetPrice = targetPriceInput ? parseNumber(row[targetPriceColumn]) : 0;
+    if (targetPriceInput && (!Number.isFinite(targetPrice) || targetPrice <= 0)) {
+      throw new Error(`El precio objetivo de ${symbol} debe ser un número mayor que cero.`);
+    }
+    transactions.push({ kind: "buy", date, symbol, type, quantity, costArs, costUsd, unitPrice, currency, mep, targetPrice });
     symbols.set(symbol, type);
   }
 
@@ -542,6 +552,7 @@ async function getPortfolioRows(fileId = DRIVE_FILE_ID) {
         quantity: 0,
         costArs: 0,
         costUsd: 0,
+        targetPrice: 0,
         purchaseDateQuantity: 0,
         purchasedQuantity: 0,
         purchaseAmountArs: 0,
@@ -555,6 +566,7 @@ async function getPortfolioRows(fileId = DRIVE_FILE_ID) {
       asset.costArs += transaction.costArs;
       asset.costUsd += transaction.costUsd;
       asset.purchaseDateQuantity += Date.parse(`${transaction.date}T00:00:00Z`) * transaction.quantity;
+      if (transaction.targetPrice > 0) asset.targetPrice = transaction.targetPrice;
       asset.purchasedQuantity += transaction.quantity;
       asset.purchaseAmountArs += transaction.costArs;
       asset.purchaseAmountUsd += transaction.costUsd;
@@ -599,8 +611,17 @@ async function getPortfolioRows(fileId = DRIVE_FILE_ID) {
   const openPositions = [...inventory.values()].filter((asset) => asset.quantity > 1e-8);
   const quotes = await Promise.all(openPositions.map((asset) => getQuote(asset.symbol, asset.type)));
   const quotesBySymbol = new Map(quotes.map((quote) => [quote.symbol, quote]));
+  const targetQuotes = await Promise.all(openPositions.map((asset) =>
+    asset.targetPrice > 0 ? getQuote(asset.symbol, "Accion USA") : null,
+  ));
+  const targetQuotesBySymbol = new Map(
+    openPositions
+      .map((asset, index) => [asset.symbol, targetQuotes[index]])
+      .filter(([, quote]) => quote),
+  );
   const positions = openPositions.map((asset) => {
     const quote = quotesBySymbol.get(asset.symbol);
+    const targetQuote = targetQuotesBySymbol.get(asset.symbol);
     const currentValueUsd = quote.currency === "ARS" ? (asset.quantity * quote.price) / currentMep : asset.quantity * quote.price;
     const currentValueArs = quote.currency === "ARS" ? asset.quantity * quote.price : asset.quantity * quote.price * currentMep;
     const gainUsd = currentValueUsd - asset.costUsd;
@@ -610,6 +631,11 @@ async function getPortfolioRows(fileId = DRIVE_FILE_ID) {
       name: asset.symbol,
       currentPrice: quote.price,
       currentPriceCurrency: quote.currency,
+      targetPrice: asset.targetPrice,
+      targetPriceCurrency: "USD",
+      targetCurrentPrice: targetQuote?.price ?? null,
+      targetCurrentPriceCurrency: targetQuote?.currency ?? null,
+      targetReached: asset.targetPrice > 0 && targetQuote?.currency === "USD" && targetQuote.price >= asset.targetPrice,
       quoteDate: quote.quoteDate,
       currentValueUsd,
       currentValueArs,
